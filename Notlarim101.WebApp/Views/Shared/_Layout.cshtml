@@ -65,10 +65,10 @@
 
     <div class="container-fluid body-content">
         <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-2" id="category2">
                 @Html.Partial("_PartialCategories")
             </div>
-            <div class="col-md-10">
+            <div class="col-md-10" id="category3">
                 @RenderBody()
             </div>
         </div>
@@ -76,7 +76,7 @@
         <hr />
     </div>
 <!-- Footer-->
-<footer class="py-5 bg-dark">
+<footer class="py-5 bg-dark" id="footer1">
     <div class="row m-0">
         <div class="container col-lg-4 text-white text-center">
             <h5>Site Haritasi</h5>
