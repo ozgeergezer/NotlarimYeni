@@ -21,14 +21,14 @@ namespace Notlarim101.BusinessLayer
 
             BusinessLayerResult<NotlarimUser> lr = new BusinessLayerResult<NotlarimUser>();
 
-            if (user!=null)
+            if (user != null)
             {
-                if (user.Username==data.Username)
+                if (user.Username == data.Username)
                 {
                     lr.AddError(ErrorMessageCode.UsernameAlreadyExist, "Kullanici adi kayitli");
                 }
 
-                if (user.Email==data.Email)
+                if (user.Email == data.Email)
                 {
                     lr.AddError(ErrorMessageCode.EmailalreadyExist, "Email kayitli");
                 }
@@ -51,7 +51,7 @@ namespace Notlarim101.BusinessLayer
                     //CreatedOn = DateTime.Now,
                     //ModifiedUsername = "system"
                 });
-                if (dbResult>0)
+                if (dbResult > 0)
                 {
                     lr.Result = ruser.Find(s => s.Email == data.Email && s.Username == data.Username);
                     //activasyon mail i atilacak
@@ -66,10 +66,10 @@ namespace Notlarim101.BusinessLayer
         {
             //Giris kontrolu
             //Hesap aktif edilmismi kontrolu
-            
+
             BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
             res.Result = ruser.Find(s => s.Username == data.Username && s.Password == data.Password);
-            if (res.Result!=null)
+            if (res.Result != null)
             {
                 if (!res.Result.IsActive)
                 {
@@ -82,6 +82,27 @@ namespace Notlarim101.BusinessLayer
                 res.AddError(ErrorMessageCode.UsernameOrPasswordWrong, "kullanici adi yada sifre uyusmuyor.");
             }
 
+            return res;
+        }
+
+        public BusinessLayerResult<NotlarimUser> ActivateUser(Guid id)
+        {
+            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+            res.Result = ruser.Find(x => x.ActivateGuid == id);
+            if (res.Result != null)
+            {
+                if (res.Result.IsActive)
+                {
+                    res.AddError(ErrorMessageCode.UserAlreadyActive, "Kullanıcı hesabı dah önce aktif edilmiş.");
+                    return res;
+                }
+                res.Result.IsActive = true;
+                ruser.Update(res.Result);
+            }
+            else
+            {
+                res.AddError(ErrorMessageCode.ActivateIdDoesNotExist, "Sal Siteyi sallll");
+            }
             return res;
         }
     }
