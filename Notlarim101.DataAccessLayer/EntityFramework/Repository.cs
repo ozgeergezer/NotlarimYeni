@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 using Notlarim101.Common;
 using Notlarim101.Core.DataAccess;
 using Notlarim101.DataAccessLayer;
-using Notlarim101.DataAccessLayer.Abstract;
 using Notlarim101.Entity;
 
 namespace Notlarim101.DataAccessLayer.EntityFramework
 {
-    public class Repository<T>:RepositoryBase,IDataAccess<T> where T : class//T nesnesi referans type olmalidir. Class lar da rt oldugu icin kisit olarak kullanilmistir.
+    public class Repository<T>:RepositoryBase,IDataAccess<T> where T : class
+        //T nesnesi referans type olmalidir. Class lar da rt oldugu icin kisit olarak kullanilmistir.
     {
         private DbSet<T> objSet;
         
@@ -36,14 +36,14 @@ namespace Notlarim101.DataAccessLayer.EntityFramework
         {
             return objSet.Where(where).ToList();
         }
-        public IQueryable<T> QList(Expression<Func<T, bool>> query)
+        public IQueryable<T> QList()
         {
-            return objSet.Where(query);
+            return objSet.AsQueryable<T>();
         }
 
-        public int Insert(T obj)///Calisma mantigi sorulacak
+        public int Insert(T obj)//trucker çalışıyormuş burada editleme save ye kadar devam ediyor ordan sonra kaydediyor
         {
-            objSet.Add(obj);
+            objSet.Add(obj);// yani burda add yazdık ama burada kaydetmiyor
             if (obj is MyEntityBase)
             {
                 MyEntityBase o = obj as MyEntityBase;
@@ -52,7 +52,7 @@ namespace Notlarim101.DataAccessLayer.EntityFramework
                 o.ModifiedOn = now;
                 o.ModifiedUsername = App.Common.GetCurrentUsername(); //"system"; 
             }
-            return Save();
+            return Save();//son kayıdı burada yapıyor
         }
 
         public int Update(T obj)
