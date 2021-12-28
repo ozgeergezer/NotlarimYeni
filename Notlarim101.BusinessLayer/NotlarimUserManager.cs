@@ -15,35 +15,35 @@ namespace Notlarim101.BusinessLayer
         //Kayit islemini gerceklestirmeliyim
         //Activasyon e-postasi gonderimi
 
+        BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+
         public BusinessLayerResult<NotlarimUser> RegisterUser(RegisterViewModel data)
         {
             NotlarimUser user = Find(s => s.Username == data.Username || s.Email == data.Email);
-
-            BusinessLayerResult<NotlarimUser> lr = new BusinessLayerResult<NotlarimUser>();
 
             if (user != null)
             {
                 if (user.Username == data.Username)
                 {
-                    lr.AddError(ErrorMessageCode.UsernameAlreadyExist, "Kullanici adi kayitli");
+                    res.AddError(ErrorMessageCode.UsernameAlreadyExist, "Kullanici adi kayitli");
                 }
 
                 if (user.Email == data.Email)
                 {
-                    lr.AddError(ErrorMessageCode.EmailalreadyExist, "Email kayitli");
+                    res.AddError(ErrorMessageCode.EmailalreadyExist, "Email kayitli");
                 }
                 //throw new Exception("Kayitli kullanici yada e-posta adresi");
             }
             else
             {
-                int dbResult = Insert(new NotlarimUser()
+                int dbResult = base.Insert(new NotlarimUser()
                 {
                     Name = data.Name,
                     Surname = data.Surname,
                     Username = data.Username,
                     Email = data.Email,
                     Password = data.Password,
-                    ProfileImageFilename = "user1.jpeg",
+                    ProfileImageFilename = "User1.png",
                     ActivateGuid = Guid.NewGuid(),
                     IsActive = false,
                     IsAdmin = false,
@@ -51,20 +51,25 @@ namespace Notlarim101.BusinessLayer
                     //ModifiedOn = DateTime.Now,
                     //CreatedOn = DateTime.Now,
                     //ModifiedUsername = "system"
-                }); ;
+                });
                 if (dbResult > 0)
                 {
-                    lr.Result = Find(s => s.Email == data.Email && s.Username == data.Username);
+                    res.Result = Find(s => s.Email == data.Email && s.Username == data.Username);
+
+                    string siteUri = ConfigHelper.Get<string>("SiteRootUri");
+                    string activateUri = $"{siteUri}/Home/UserActivate/{res.Result.ActivateGuid}";
+                    string body =
+                        $"Merhaba {res.Result.Username}; <br><br> Hesabinizi aktiflestirmek icin <a href='{activateUri}' target='_blank'> Tiklayin </a>.";
+
+                    MailHelper.SendMail(body, res.Result.Email, "Notlarim101 hesap aktiflestirme");
+
+
                     //activasyon mail i atilacak
                     //lr.Result.ActivateGuid;
-                    string siteUri = ConfigHelper.Get<string>("SiteRootUri");
-                    string activateUri = $"{siteUri}/Home/UserActivate/{lr.Result.ActivateGuid}";
-                    string body = $"Merhaba {lr.Result.Username}; <br><br> Hesabınızı aktifleştirebilmek için <a href='{activateUri}'target='_blank'>Tıklayın</a>.";
-                    MailHelper.SendMail(body, lr.Result.Email, "Notlarim101 Hesap Aktifleştirme");
                 }
             }
 
-            return lr;
+            return res;
         }
 
         public BusinessLayerResult<NotlarimUser> LoginUser(LoginViewModel data)
@@ -72,7 +77,7 @@ namespace Notlarim101.BusinessLayer
             //Giris kontrolu
             //Hesap aktif edilmismi kontrolu
 
-            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+
             res.Result = Find(s => s.Username == data.Username && s.Password == data.Password);
             if (res.Result != null)
             {
@@ -92,88 +97,167 @@ namespace Notlarim101.BusinessLayer
 
         public BusinessLayerResult<NotlarimUser> ActivateUser(Guid id)
         {
-            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+
             res.Result = Find(x => x.ActivateGuid == id);
+
             if (res.Result != null)
             {
-                if (res.Result.IsActive == true)
+                if (res.Result.IsActive)
                 {
-                    res.AddError(ErrorMessageCode.UserAlreadyActive, "Bu hesap daha önce aktif edilmiştir");
+                    res.AddError(ErrorMessageCode.UserAlreadyActive, "Bu hesap daha once aktif edilmis!!! ");
                     return res;
                 }
+
                 res.Result.IsActive = true;
                 Update(res.Result);
             }
             else
             {
-                res.AddError(ErrorMessageCode.ActivateIdDoesNotExist, "Yine mi sen");
+                res.AddError(ErrorMessageCode.ActivateIdDoesNotExist, "Muhammed yine mi sen");
             }
+
             return res;
         }
+
         public BusinessLayerResult<NotlarimUser> GetUserById(int id)
         {
-            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+
             res.Result = Find(s => s.Id == id);
             if (res.Result == null)
             {
-                res.AddError(ErrorMessageCode.UserNotFound, "Kullanıcı bulunamadı.");
+                res.AddError(ErrorMessageCode.UserNotFound, "Kullanici bulunamadi.");
             }
+
             return res;
         }
 
         public BusinessLayerResult<NotlarimUser> UpdateProfile(NotlarimUser data)
         {
-            NotlarimUser user = Find(s => s.Id != data.Id && (s.Username == data.Username || s.Email == data.Email));
-            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+            NotlarimUser user =
+                Find(s => s.Id != data.Id && (s.Username == data.Username || s.Email == data.Email));
+
             if (user != null && user.Id != data.Id)
             {
                 if (user.Username == data.Username)
                 {
-                    res.AddError(ErrorMessageCode.UsernameAlreadyExist, "Bu kullanıcı adı daha önce kaydedilmiş!");
+                    res.AddError(ErrorMessageCode.UsernameAlreadyExist, "Bu kullanici adi daha once kaydedilmis.");
                 }
                 if (user.Email == data.Email)
                 {
-                    res.AddError(ErrorMessageCode.EmailalreadyExist, "Bu email daha önce kaydedilmiş!");
+                    res.AddError(ErrorMessageCode.EmailalreadyExist, "Bu email daha once kaydedilmis.");
                 }
+
                 return res;
             }
+
             res.Result = Find(s => s.Id == data.Id);
             res.Result.Email = data.Email;
             res.Result.Name = data.Name;
             res.Result.Surname = data.Surname;
-            res.Result.Username = data.Username;
             res.Result.Password = data.Password;
-
+            res.Result.Username = data.Username;
             if (!string.IsNullOrEmpty(data.ProfileImageFilename))
             {
                 res.Result.ProfileImageFilename = data.ProfileImageFilename;
             }
-            if (Update(res.Result) == 0)
+
+            if (base.Update(res.Result) == 0)
             {
-                res.AddError(ErrorMessageCode.ProfileCouldNotUpdate, "Profil güncellenemedi");
+                res.AddError(ErrorMessageCode.ProfileCouldNotUpdate, "Profil guncellenemedi.");
             }
             return res;
-
-
         }
 
         public BusinessLayerResult<NotlarimUser> RemoveUserById(int id)
         {
-            NotlarimUser user = Find(s => s.Id != id);
-            BusinessLayerResult<NotlarimUser> res = new BusinessLayerResult<NotlarimUser>();
+            NotlarimUser user = Find(s => s.Id == id);
 
             if (user != null)
             {
                 if (Delete(user) == 0)
                 {
-                    res.AddError(ErrorMessageCode.UserCouldNotRemove, "Kullanıcı silinemedi.");
+                    res.AddError(ErrorMessageCode.UserCouldNotRemove, "Kullanici silinemedi...");
                 }
             }
             else
             {
-                res.AddError(ErrorMessageCode.UserCouldNotFind, "Kullanıcı bulunamadı.");
+                res.AddError(ErrorMessageCode.UserCouldNotFind, "Kullanici bulunamadi...");
+            }
+
+            return res;
+        }
+        // buraya kadarki kısım kullanıcının kendisi ile ilgili yaptıkları sol üstte ada basınca açılan
+
+        // Hiding Method...
+        public new BusinessLayerResult<NotlarimUser> Insert(NotlarimUser data)
+        {
+            NotlarimUser user = Find(s => s.Username == data.Username || s.Email == data.Email);
+            res.Result = data;
+
+            if (user != null)
+            {
+                if (user.Username == data.Username)
+                {
+                    res.AddError(ErrorMessageCode.UsernameAlreadyExist, "Kullanici adi kayitli");
+                }
+
+                if (user.Email == data.Email)
+                {
+                    res.AddError(ErrorMessageCode.EmailalreadyExist, "Email kayitli");
+                }
+                //throw new Exception("Kayitli kullanici yada e-posta adresi");
+            }
+            else
+            {
+                res.Result.ProfileImageFilename = "user1.png";
+                res.Result.ActivateGuid = Guid.NewGuid();
+
+                if (base.Insert(res.Result) == 0)
+                {
+                    res.AddError(ErrorMessageCode.UserCouldNotInserted, "Kullanici eklenemedi");
+                }
+            }
+
+            return res;
+        }
+        //create ile alakalı burası
+
+        public new BusinessLayerResult<NotlarimUser> Update(NotlarimUser data)
+        {
+
+            NotlarimUser user =
+                Find(s => s.Id != data.Id && (s.Username == data.Username || s.Email == data.Email));
+
+            if (user != null && user.Id != data.Id)
+            {
+                if (user.Username == data.Username)
+                {
+                    res.AddError(ErrorMessageCode.UsernameAlreadyExist, "Bu kullanici adi daha once kaydedilmis.");
+                }
+                if (user.Email == data.Email)
+                {
+                    res.AddError(ErrorMessageCode.EmailalreadyExist, "Bu email daha once kaydedilmis.");
+                }
+
+                return res;
+            }
+
+            res.Result = Find(s => s.Id == data.Id);
+            res.Result.Email = data.Email;
+            res.Result.Name = data.Name;
+            res.Result.Surname = data.Surname;
+            res.Result.Password = data.Password;
+            res.Result.Username = data.Username;
+            res.Result.IsActive = data.IsActive;
+            res.Result.IsAdmin = data.IsAdmin;
+
+            if (base.Update(res.Result) == 0)
+            {
+                res.AddError(ErrorMessageCode.UserCouldNotUpdated, "Kullanıcı guncellenemedi.");
             }
             return res;
         }
+        
+        //burası ise yönetim içinde adminin yaptığı işlemler ekle sil düzenle yeni kullanıcı oluşturabilir
     }
 }

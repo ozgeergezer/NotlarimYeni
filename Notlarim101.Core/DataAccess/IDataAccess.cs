@@ -10,17 +10,12 @@ namespace Notlarim101.Core.DataAccess
     public interface IDataAccess<T>
     {
         List<T> List();
-
         List<T> List(Expression<Func<T, bool>> where);
-
         IQueryable<T> QList();
-
         int Insert(T obj);
         int Update(T obj);
         int Delete(T obj);
-
         int Save();
-
         T Find(Expression<Func<T, bool>> find);
     }
 }
