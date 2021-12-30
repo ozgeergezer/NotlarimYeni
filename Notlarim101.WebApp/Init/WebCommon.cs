@@ -13,7 +13,7 @@ namespace Notlarim101.WebApp.Init
         {
             if (HttpContext.Current.Session["login"]!=null)
             {
-                NotlarimUser user=HttpContext.Current.Session["login"] as NotlarimUser;
+                NotlarimUser user= CurrentSession.User as NotlarimUser;
                 return user.Username;
             }
 
