@@ -24,5 +24,7 @@ namespace Notlarim101.WebApp.Data
         public System.Data.Entity.DbSet<Notlarim101.Entity.Note> Notes { get; set; }
 
         public System.Data.Entity.DbSet<Notlarim101.Entity.Category> Categories { get; set; }
+
+        public System.Data.Entity.DbSet<Notlarim101.Entity.Comment> Comments { get; set; }
     }
 }
